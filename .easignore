@@ -1,0 +1,15 @@
+node_modules/
+/.local/
+/.idea/
+.git/
+.expo/
+dist/
+dist-*/
+tests/
+docs/
+*.zip
+*.log
+.env
+.env.*
+*.pem
+*.key

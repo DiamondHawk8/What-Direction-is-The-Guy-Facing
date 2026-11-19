@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "What Direction Is The Guy Facing?",
+    "slug": "what-direction-is-the-guy-facing",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "wditgf",
+    "icon": "./assets/icon.png",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.josephisaac.wditgf",
+      "infoPlist": {
+        "NSLocalNetworkUsageDescription": "Connect to your development server and local heading-tracker services.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": { "package": "com.josephisaac.wditgf" },
+    "plugins": ["expo-dev-client"],
+    "web": { "favicon": "./assets/favicon.png" }
+  }
+}

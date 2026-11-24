@@ -1,6 +1,6 @@
 ﻿import { StyleSheet } from 'react-native';
 
-const ink = '#202020';
+export const ink = '#202020';
 
 export const styles = StyleSheet.create({
   screen: {
@@ -12,18 +12,20 @@ export const styles = StyleSheet.create({
     maxWidth: 520,
     alignSelf: 'center',
     paddingHorizontal: 24,
-    paddingTop: 36,
+    paddingTop: 28,
     paddingBottom: 36,
-    gap: 36,
+    gap: 24,
   },
   introduction: {
-    gap: 12,
+    alignItems: 'center',
+    gap: 8,
   },
   title: {
     color: ink,
     fontFamily: 'Georgia',
     fontSize: 32,
     lineHeight: 40,
+    textAlign: 'center',
   },
   text: {
     color: ink,
@@ -31,21 +33,29 @@ export const styles = StyleSheet.create({
     lineHeight: 24,
   },
   reading: {
-    gap: 8,
+    alignItems: 'center',
+    gap: 4,
+  },
+  compass: {
+    width: '100%',
+    maxWidth: 252,
+    aspectRatio: 1,
   },
   heading: {
     color: ink,
     fontFamily: 'Georgia',
-    fontSize: 72,
+    fontSize: 64,
+    textAlign: 'center',
     fontVariant: ['tabular-nums'],
   },
   facts: {
-    marginTop: 24,
+    alignItems: 'center',
     gap: 4,
   },
   controls: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    justifyContent: 'center',
     gap: 12,
   },
   button: {

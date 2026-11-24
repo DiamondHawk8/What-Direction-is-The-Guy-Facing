@@ -1,11 +1,12 @@
 import { useMemo } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Crypto from 'expo-crypto';
 import type { Snapshot } from '../core/viewer.ts';
 import { SimulatorFeed } from '../sources/simulator.ts';
 import { useViewer } from '../useViewer.ts';
 import { Compass } from './Compass.tsx';
+import { GuyHologram } from './hologram/GuyHologram.tsx';
 import { styles } from './viewerStyles.ts';
 
 const DEMO_DEVICE_ID = 'demo-001';
@@ -35,7 +36,11 @@ function readingMessage(state: Snapshot['state']): string {
   }
 }
 
-function HeadingReading({ heading, state }: Pick<Snapshot, 'heading' | 'state'>) {
+type HeadingReadingProps = Pick<Snapshot, 'heading' | 'state'> & {
+  compact: boolean;
+};
+
+function HeadingReading({ heading, state, compact }: HeadingReadingProps) {
   let directionLabel = 'Magnetic heading';
 
   if (heading !== null) {
@@ -45,28 +50,32 @@ function HeadingReading({ heading, state }: Pick<Snapshot, 'heading' | 'state'>)
   }
 
   return (
-    <View style={styles.reading}>
+    <View style={[styles.reading, compact && styles.compactReading]}>
       <View
-        style={styles.compass}
+        style={[styles.compass, compact && styles.compactCompass]}
         aria-hidden
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
       >
         <Compass heading={heading} />
       </View>
-      <Text testID="heading-value" style={styles.heading}>
-        {heading === null ? '—' : `${heading.toFixed(1)}°`}
-      </Text>
-      <Text style={styles.text}>{directionLabel}</Text>
-      <Text accessibilityLiveRegion="polite" style={styles.text}>
-        {readingMessage(state)}
-      </Text>
+      <View style={styles.headingDetails}>
+        <Text testID="heading-value" style={[styles.heading, compact && styles.compactHeading]}>
+          {heading === null ? '—' : `${heading.toFixed(1)}°`}
+        </Text>
+        <Text style={styles.readingText}>{directionLabel}</Text>
+        <Text accessibilityLiveRegion="polite" style={styles.readingText}>
+          {readingMessage(state)}
+        </Text>
+      </View>
     </View>
   );
 }
 
 // wire sim controls to the feed
 export function ViewerScreen() {
+  const { width } = useWindowDimensions();
+  const compact = width < 740;
   // Keep  feed stable across the hook renders
   const feed = useMemo(
     () => new SimulatorFeed(DEMO_DEVICE_ID, () => Crypto.randomUUID()),
@@ -87,7 +96,18 @@ export function ViewerScreen() {
           <Text style={styles.text}>Simulated data</Text>
         </View>
 
-        <HeadingReading heading={view.heading} state={view.state} />
+        <View style={styles.instrument}>
+          <View
+            style={styles.hologram}
+            testID="guy-hologram"
+            aria-hidden
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          >
+            <GuyHologram heading={view.heading} />
+          </View>
+          <HeadingReading heading={view.heading} state={view.state} compact={compact} />
+        </View>
 
         <View style={styles.controls}>
           <Pressable

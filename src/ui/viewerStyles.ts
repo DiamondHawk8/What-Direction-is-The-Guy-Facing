@@ -9,12 +9,12 @@ export const styles = StyleSheet.create({
   },
   content: {
     width: '100%',
-    maxWidth: 520,
+    maxWidth: 600,
     alignSelf: 'center',
     paddingHorizontal: 24,
-    paddingTop: 28,
+    paddingTop: 24,
     paddingBottom: 36,
-    gap: 24,
+    gap: 20,
   },
   introduction: {
     alignItems: 'center',

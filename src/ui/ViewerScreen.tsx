@@ -89,12 +89,6 @@ export function ViewerScreen() {
 
         <HeadingReading heading={view.heading} state={view.state} />
 
-        <View style={styles.facts}>
-          <Text style={styles.text}>Device: {view.deviceId}</Text>
-          <Text style={styles.text}>Connection: {view.connection}</Text>
-          <Text style={styles.text}>Last usable update: {lastUsableUpdate}</Text>
-        </View>
-
         <View style={styles.controls}>
           <Pressable
             accessibilityRole="button"
@@ -108,8 +102,14 @@ export function ViewerScreen() {
             onPress={() => feed.setScenario('live')}
             style={({ pressed }) => [styles.button, pressed && styles.pressed]}
           >
-            <Text style={styles.buttonText}>Resume fresh data</Text>
+            <Text style={styles.buttonText}>Resume samples</Text>
           </Pressable>
+        </View>
+
+        <View style={styles.facts}>
+          <Text style={styles.text}>Device: {view.deviceId}</Text>
+          <Text style={styles.text}>Connection: {view.connection}</Text>
+          <Text style={styles.text}>Last usable update: {lastUsableUpdate}</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

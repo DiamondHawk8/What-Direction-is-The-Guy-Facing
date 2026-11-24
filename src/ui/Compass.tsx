@@ -2,7 +2,6 @@ import Svg, { Circle, G, Line, Polygon, Text as SvgText } from 'react-native-svg
 import { ink } from './viewerStyles.ts';
 
 const DIAL_CENTER = 128;
-const ROTATION_ORIGIN = `${DIAL_CENTER},${DIAL_CENTER}`;
 const tickAngles = Array.from({ length: 60 }, (_, tickIndex) => tickIndex * 6);
 
 const cardinalPoints = [
@@ -11,6 +10,10 @@ const cardinalPoints = [
   { letter: 'S', x: 128, y: 216 },
   { letter: 'W', x: 46, y: 134 },
 ];
+
+function rotateAroundDial(angle: number): string {
+  return `rotate(${angle} ${DIAL_CENTER} ${DIAL_CENTER})`;
+}
 
 export function Compass({ heading }: { heading: number | null }) {
   return (
@@ -29,8 +32,7 @@ export function Compass({ heading }: { heading: number | null }) {
             y2={isMajorTick ? 25 : 18}
             stroke={ink}
             strokeWidth={isMajorTick ? 1.5 : 0.75}
-            origin={ROTATION_ORIGIN}
-            rotation={angle}
+            transform={rotateAroundDial(angle)}
           />
         );
       })}
@@ -43,7 +45,7 @@ export function Compass({ heading }: { heading: number | null }) {
 
       {/* The unrotated needle points north. Headings turn it clockwise. */}
       {heading !== null && (
-        <G origin={ROTATION_ORIGIN} rotation={heading}>
+        <G transform={rotateAroundDial(heading)}>
           <Polygon points="128,64 140,132 128,125 116,132" fill={ink} />
           <Polygon points="128,192 138,134 128,140 118,134" fill="none" stroke={ink} />
         </G>

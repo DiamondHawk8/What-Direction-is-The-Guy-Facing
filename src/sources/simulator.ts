@@ -1,14 +1,13 @@
-// Temporary placeholder for simulator feed
-
 import { topics } from '../core/contract.ts';
 import type { GatewayStatus, Telemetry } from '../core/contract.ts';
 import type { FeedSink, HeadingFeed } from './types.ts';
+import { SimulatedMotion } from './motion.ts';
+import type { MotionProfile } from './motion.ts';
 
 export type Scenario = 'live' | 'paused';
 
 const SAMPLE_INTERVAL_MS = 200;
 const HEARTBEAT_INTERVAL_MS = 10_000;
-const DEGREES_PER_SECOND = 30;
 
 export class SimulatorFeed implements HeadingFeed {
   readonly kind = 'simulation' as const;
@@ -19,18 +18,18 @@ export class SimulatorFeed implements HeadingFeed {
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private session = '';
   private seq = 0;
-  private startedAt = 0;
+  private readonly motion: SimulatedMotion;
   private scenario: Scenario = 'live';
 
-  constructor(deviceId: string, newUuid: () => string) {
+  constructor(deviceId: string, newUuid: () => string, random: () => number = Math.random) {
     this.deviceId = deviceId;
     this.newUuid = newUuid;
+    this.motion = new SimulatedMotion('everyday', random);
   }
 
   start(sink: FeedSink): void {
     this.stop();
     this.sink = sink;
-    this.startedAt = Date.now();
     this.setScenario('live');
     this.sampleTimer = setInterval(() => this.emitSample(), SAMPLE_INTERVAL_MS);
     this.heartbeatTimer = setInterval(() => this.emitStatus(), HEARTBEAT_INTERVAL_MS);
@@ -54,17 +53,20 @@ export class SimulatorFeed implements HeadingFeed {
     this.emitSample();
   }
 
+  setMotionProfile(profile: MotionProfile): void {
+    this.motion.setProfile(profile);
+  }
+
   private emitSample(): void {
     if (!this.sink || this.scenario === 'paused') return;
 
-    const elapsedSeconds = (Date.now() - this.startedAt) / 1000;
     const sample: Telemetry = {
       schema_version: 1,
       device_id: this.deviceId,
       session_id: this.session,
       seq: this.seq++,
       measured_at: new Date().toISOString(),
-      heading_deg: (elapsedSeconds * DEGREES_PER_SECOND + 42.5) % 360,
+      heading_deg: this.motion.advance(SAMPLE_INTERVAL_MS),
       heading_reference: 'magnetic',
       source: 'simulator',
       status: 'ok',

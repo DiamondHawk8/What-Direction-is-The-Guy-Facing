@@ -13,7 +13,7 @@ const clock = () => ({ wallMs: Date.now(), monoMs: Date.now() - epoch });
 function createFeed(t) {
   t.mock.timers.enable({ apis: ['Date', 'setInterval'], now: epoch });
   let sessions = 0;
-  const feed = new SimulatorFeed(deviceId, () => sessions++ === 0 ? firstSession : secondSession);
+  const feed = new SimulatorFeed(deviceId, () => sessions++ === 0 ? firstSession : secondSession, () => 0.25);
   t.after(() => feed.stop());
   return feed;
 }
@@ -34,7 +34,7 @@ test('simulator emits validated, non-retained samples at 5 Hz', t => {
   }
   assert.deepEqual(packets.map(packet => packet.retained), [false, false]);
   assert.deepEqual(samples.map(sample => sample.seq), [0, 1]);
-  assert.equal(samples[1].heading_deg - samples[0].heading_deg, 6);
+  assert.ok(Math.abs(samples[1].heading_deg - samples[0].heading_deg) < 1);
   assert.equal(samples[1].measured_at, new Date(epoch + 200).toISOString());
 });
 

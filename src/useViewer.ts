@@ -3,6 +3,7 @@ import { AppState, Platform } from 'react-native';
 import { ViewerEngine } from './core/viewer.ts';
 import type { Clock, Snapshot } from './core/viewer.ts';
 import type { HeadingFeed } from './sources/types.ts';
+import { observeFeed } from './sources/observe.ts';
 
 
 const clock = (): Clock => ({
@@ -11,7 +12,7 @@ const clock = (): Clock => ({
 });
 
 // Connects a feed to the viewer engine
-export function useViewer(feed: HeadingFeed, deviceId: string): Snapshot {
+export function useViewer(feed: HeadingFeed | null, deviceId: string): Snapshot {
   const engine = useMemo(() => new ViewerEngine(deviceId), [feed, deviceId]);
   const [rendered, setRendered] = useState(() => ({
     engine,
@@ -19,7 +20,9 @@ export function useViewer(feed: HeadingFeed, deviceId: string): Snapshot {
   }));
 
   useEffect(() => {
+    if (!feed) return;
     let running = false;
+    let stopObserving: (() => void) | null = null;
     let interval: ReturnType<typeof setInterval> | null = null;
 
     // Refreshes snapshot
@@ -33,7 +36,7 @@ export function useViewer(feed: HeadingFeed, deviceId: string): Snapshot {
       }
 
       running = true;
-      feed.start(event => {
+      stopObserving = observeFeed(feed, event => {
         engine.ingest(event, clock());
         render();
       });
@@ -45,7 +48,8 @@ export function useViewer(feed: HeadingFeed, deviceId: string): Snapshot {
     // marks the viewer as suspended in the background
     const background = () => {
       running = false;
-      feed.stop();
+      stopObserving?.();
+      stopObserving = null;
 
       if (interval) {
         clearInterval(interval);
@@ -83,7 +87,7 @@ export function useViewer(feed: HeadingFeed, deviceId: string): Snapshot {
 
     return () => {
       subscription.remove();
-      feed.stop();
+      stopObserving?.();
 
       if (interval) {
         clearInterval(interval);

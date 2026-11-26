@@ -1,137 +1,73 @@
-import { useMemo } from 'react';
-import { Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import * as Crypto from 'expo-crypto';
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import type { Snapshot } from '../core/viewer.ts';
-import { SimulatorFeed } from '../sources/simulator.ts';
-import { useViewer } from '../useViewer.ts';
+import { useAppearance } from './AppearanceProvider.tsx';
+import { AppText, commonStyles, DetailRow } from './components.tsx';
 import { Compass } from './Compass.tsx';
 import { GuyHologram } from './hologram/GuyHologram.tsx';
-import { styles } from './viewerStyles.ts';
+import { HeadingReading } from './HeadingReading.tsx';
+import { formatAge, readingStatus } from './viewerPresentation.ts';
 
-const DEMO_DEVICE_ID = 'demo-001';
-const cardinalDirections = [
-  'North',
-  'Northeast',
-  'East',
-  'Southeast',
-  'South',
-  'Southwest',
-  'West',
-  'Northwest',
-];
-
-function readingMessage(state: Snapshot['state']): string {
-  switch (state) {
-    case 'LIVE':
-      return 'Live';
-    case 'STALE':
-      return 'No recent reading';
-    case 'WAITING':
-      return 'Waiting for a reading';
-    case 'SUSPENDED':
-      return 'In the background';
-    default:
-      return 'Heading unavailable';
-  }
-}
-
-type HeadingReadingProps = Pick<Snapshot, 'heading' | 'state'> & {
-  compact: boolean;
-};
-
-function HeadingReading({ heading, state, compact }: HeadingReadingProps) {
-  let directionLabel = 'Magnetic heading';
-
-  if (heading !== null) {
-    const nearestSector = Math.round(heading / 45);
-    const direction = cardinalDirections[nearestSector % cardinalDirections.length];
-    directionLabel = `${direction} (magnetic)`;
-  }
+export function ViewerScreen({ view }: { view: Snapshot }) {
+  const { palette, preferences } = useAppearance();
+  const { height } = useWindowDimensions();
+  const { colors } = palette;
+  const status = readingStatus(view.state);
+  const statusColor = status.tone === 'positive' ? colors.accent
+    : status.tone === 'error' ? colors.error
+    : status.tone === 'warning' ? colors.warning : colors.secondary;
+  const figureHeight = Math.max(170, Math.min(290, height * 0.31));
 
   return (
-    <View style={[styles.reading, compact && styles.compactReading]}>
-      <View
-        style={[styles.compass, compact && styles.compactCompass]}
-        aria-hidden
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-      >
-        <Compass heading={heading} />
-      </View>
-      <View style={styles.headingDetails}>
-        <Text testID="heading-value" style={[styles.heading, compact && styles.compactHeading]}>
-          {heading === null ? '—' : `${heading.toFixed(1)}°`}
-        </Text>
-        <Text style={styles.readingText}>{directionLabel}</Text>
-        <Text accessibilityLiveRegion="polite" style={styles.readingText}>
-          {readingMessage(state)}
-        </Text>
-      </View>
-    </View>
-  );
-}
-
-// wire sim controls to the feed
-export function ViewerScreen() {
-  const { width } = useWindowDimensions();
-  const compact = width < 740;
-  // Keep  feed stable across the hook renders
-  const feed = useMemo(
-    () => new SimulatorFeed(DEMO_DEVICE_ID, () => Crypto.randomUUID()),
-    [],
-  );
-  const view = useViewer(feed, DEMO_DEVICE_ID);
-  const lastUsableUpdate = view.ageMs === null
-    ? 'none yet'
-    : `${(view.ageMs / 1000).toFixed(1)} s ago`;
-
-  return (
-    <SafeAreaView style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.introduction}>
-          <Text accessibilityRole="header" style={styles.title}>
-            What Direction Is The Guy Facing?
-          </Text>
-          <Text style={styles.text}>Simulated data</Text>
+    <ScrollView contentContainerStyle={[commonStyles.page, styles.page]} testID="viewer-page">
+      <View style={styles.statusRow}>
+        <View style={styles.statusLabel}>
+          <View style={[styles.dot, { backgroundColor: statusColor }]} />
+          <AppText accessibilityLiveRegion="polite" style={[styles.statusText, { color: statusColor }]}>
+            {status.label}
+          </AppText>
         </View>
+        <AppText style={[styles.device, { color: colors.secondary }]}>{view.deviceId}</AppText>
+      </View>
 
-        <View style={styles.instrument}>
-          <View
-            style={styles.hologram}
-            testID="guy-hologram"
-            aria-hidden
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-          >
+      <View
+        style={[styles.visual, { height: figureHeight }]}
+        aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
+      >
+        {preferences.layout !== 'compass' && (
+          <View style={preferences.layout === 'split' ? styles.splitFigure : styles.fullFigure} testID="guy-hologram">
             <GuyHologram heading={view.heading} />
           </View>
-          <HeadingReading heading={view.heading} state={view.state} compact={compact} />
-        </View>
+        )}
+        {preferences.layout !== 'figure' && (
+          <View style={preferences.layout === 'split' ? styles.splitCompass : styles.fullCompass} testID="compass-widget">
+            <Compass heading={view.heading} />
+          </View>
+        )}
+      </View>
 
-        <View style={styles.controls}>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => feed.setScenario('paused')}
-            style={({ pressed }) => [styles.button, pressed && styles.pressed]}
-          >
-            <Text style={styles.buttonText}>Pause samples</Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => feed.setScenario('live')}
-            style={({ pressed }) => [styles.button, pressed && styles.pressed]}
-          >
-            <Text style={styles.buttonText}>Resume samples</Text>
-          </Pressable>
-        </View>
-
-        <View style={styles.facts}>
-          <Text style={styles.text}>Device: {view.deviceId}</Text>
-          <Text style={styles.text}>Connection: {view.connection}</Text>
-          <Text style={styles.text}>Last usable update: {lastUsableUpdate}</Text>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+      <HeadingReading view={view} />
+      <View style={styles.details}>
+        <DetailRow label="Connection" value={view.connection} />
+        <DetailRow label="Last usable update" value={formatAge(view.ageMs)} />
+      </View>
+      {view.state !== 'LIVE' && (
+        <AppText style={[commonStyles.body, { color: colors.secondary }]}>{status.description}</AppText>
+      )}
+    </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  page: { gap: 18 },
+  statusRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8 },
+  statusLabel: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  dot: { width: 5, height: 5, borderRadius: 3 },
+  statusText: { fontSize: 12, lineHeight: 18, fontWeight: '500' },
+  device: { fontSize: 12, lineHeight: 18 },
+  visual: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
+  fullFigure: { width: '100%', height: '100%' },
+  fullCompass: { height: '95%', aspectRatio: 1 },
+  splitFigure: { width: '64%', height: '100%' },
+  splitCompass: { width: '36%', aspectRatio: 1 },
+  details: { marginTop: 8 },
+});

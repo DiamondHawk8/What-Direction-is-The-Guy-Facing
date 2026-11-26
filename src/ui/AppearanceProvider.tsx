@@ -25,7 +25,7 @@ export function AppearanceProvider({ children }: PropsWithChildren) {
   return <AppearanceContext.Provider value={value}>{children}</AppearanceContext.Provider>;
 }
 
-// A themed subtree can override presentation while sharing the same preferences.
+// A themed subtree can override presentation so that it can be rendered in a different theme 
 export function AppearanceOverride({ children, ...overrides }: PropsWithChildren<
   Partial<Pick<Appearance, 'palette' | 'formatText' | 'dispatch'>>
 >) {

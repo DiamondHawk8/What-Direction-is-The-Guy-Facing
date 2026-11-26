@@ -2,6 +2,19 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { hologramSize, projectHologram } from '../src/ui/hologram/projection.ts';
 
+test('projected material brightness stays bounded as the figure turns', () => {
+  const model = {
+    vertices: [[-0.15, 0, -0.5], [0, 0.4, -0.5], [0.15, 0, -0.5]],
+    triangles: [[0, 1, 2]],
+  };
+  for (let heading = 0; heading < 360; heading += 15) {
+    for (const face of projectHologram(model, heading)) {
+      assert.ok(Number.isFinite(face.brightness));
+      assert.ok(face.brightness >= 0 && face.brightness <= 1);
+    }
+  }
+});
+
 test('the same forward feature turns right for east and left for west', () => {
   const forwardFeature = {
     vertices: [

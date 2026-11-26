@@ -15,7 +15,7 @@ type ProjectedFace = {
   index: number;
   depth: number;
   points: string;
-  color: string;
+  brightness: number;
 };
 
 export const hologramSize = { width: 380, height: 332 };
@@ -77,9 +77,6 @@ function projectFace(
   const lightFromAboveLeft = (-0.5 * normalX + 0.72 * normalY + 0.48 * normalDepth) / normalLength;
   const rimLight = 1 - Math.abs(normalDepth / normalLength);
   const brightness = Math.min(1, 0.18 + Math.max(0, lightFromAboveLeft) * 0.66 + rimLight * 0.19);
-  const red = Math.round(16 + brightness * 141);
-  const green = Math.round(79 + brightness * 170);
-  const blue = Math.round(90 + brightness * 157);
 
   const points = [first, second, third]
     .map((point) => `${point.screenX.toFixed(2)},${point.screenY.toFixed(2)}`)
@@ -89,7 +86,7 @@ function projectFace(
     index,
     depth: (first.depth + second.depth + third.depth) / 3,
     points,
-    color: `rgb(${red}, ${green}, ${blue})`,
+    brightness,
   };
 }
 
@@ -107,6 +104,6 @@ export function projectHologram(model: Model, heading: number): ProjectedFace[] 
     }
   }
 
-  // Draw the far side first so  closer surfaces can cover it
+  // Draw the far side first so closer surfaces can cover it.
   return visibleFaces.sort((first, second) => first.depth - second.depth);
 }

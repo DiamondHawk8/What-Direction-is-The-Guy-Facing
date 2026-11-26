@@ -1,5 +1,5 @@
 import Svg, { Circle, G, Line, Polygon, Text as SvgText } from 'react-native-svg';
-import { ink } from './viewerStyles.ts';
+import { useAppearance } from './AppearanceProvider.tsx';
 
 const DIAL_CENTER = 128;
 const tickAngles = Array.from({ length: 60 }, (_, tickIndex) => tickIndex * 6);
@@ -16,9 +16,12 @@ function rotateAroundDial(angle: number): string {
 }
 
 export function Compass({ heading }: { heading: number | null }) {
+  const { palette, formatText } = useAppearance();
+  const { colors } = palette;
+  const ink = colors.accent;
   return (
     <Svg width="100%" height="100%" viewBox="0 0 256 256">
-      <Circle cx={DIAL_CENTER} cy={DIAL_CENTER} r={116} fill="none" stroke={ink} />
+      <Circle cx={DIAL_CENTER} cy={DIAL_CENTER} r={116} fill="none" stroke={colors.border} />
 
       {tickAngles.map((angle) => {
         const isMajorTick = angle % 30 === 0;
@@ -30,7 +33,7 @@ export function Compass({ heading }: { heading: number | null }) {
             y1={12}
             x2={DIAL_CENTER}
             y2={isMajorTick ? 25 : 18}
-            stroke={ink}
+            stroke={isMajorTick ? colors.secondary : colors.border}
             strokeWidth={isMajorTick ? 1.5 : 0.75}
             transform={rotateAroundDial(angle)}
           />
@@ -39,7 +42,7 @@ export function Compass({ heading }: { heading: number | null }) {
 
       {cardinalPoints.map(({ letter, x, y }) => (
         <SvgText key={letter} x={x} y={y} textAnchor="middle" fill={ink} fontSize={17}>
-          {letter}
+          {formatText(letter)}
         </SvgText>
       ))}
 

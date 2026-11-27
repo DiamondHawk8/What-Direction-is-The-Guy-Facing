@@ -9,10 +9,14 @@ export type Activity = {
   recent: number[];
   lastSession: string | null;
   lastSequence: number;
+  sources: Record<Telemetry['source'], number>;
 };
 
 export function emptyActivity(): Activity {
-  return { samples: 0, bins: Array(8).fill(0), recent: [], lastSession: null, lastSequence: -1 };
+  return {
+    samples: 0, bins: Array(8).fill(0), recent: [], lastSession: null, lastSequence: -1,
+    sources: { simulator: 0, usb_gateway: 0, ble_gateway: 0 },
+  };
 }
 
 // The caller supplies only accepted LIVE samples from ViewerEngine. Re-renders
@@ -28,6 +32,7 @@ export function recordActivity(activity: Activity, sample: Telemetry): Activity 
     recent: [...activity.recent, sample.heading_deg].slice(-HISTORY_LIMIT),
     lastSession: sample.session_id,
     lastSequence: sample.seq,
+    sources: { ...activity.sources, [sample.source]: activity.sources[sample.source] + 1 },
   };
 }
 

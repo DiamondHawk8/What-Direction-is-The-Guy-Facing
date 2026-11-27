@@ -1,4 +1,6 @@
 import type { ViewerState } from '../core/viewer.ts';
+import { describeSource } from '../core/source.ts';
+import type { SourceDescription } from '../core/source.ts';
 
 const directions = [
   'North', 'Northeast', 'East', 'Southeast',
@@ -9,13 +11,7 @@ export type StatusTone = 'positive' | 'neutral' | 'warning' | 'error';
 
 type ReadingStatus = { label: string; description: string; tone: StatusTone };
 
-// Explicit states keep transport connectivity separate from reading freshness.
-const readingStatuses: Record<ViewerState, ReadingStatus> = {
-  LIVE: {
-    label: 'Live simulation',
-    description: 'Receiving fresh readings from the local simulator.',
-    tone: 'positive',
-  },
+const readingStatuses: Record<Exclude<ViewerState, 'LIVE'>, ReadingStatus> = {
   STALE: {
     label: 'Reading expired',
     description: 'No fresh reading for three seconds. The heading is hidden until new data arrives.',
@@ -63,7 +59,14 @@ const readingStatuses: Record<ViewerState, ReadingStatus> = {
   },
 };
 
-export function readingStatus(state: ViewerState): ReadingStatus {
+export function readingStatus(state: ViewerState, source: SourceDescription = describeSource('simulation')): ReadingStatus {
+  if (state === 'LIVE') {
+    return {
+      label: source.simulated ? 'Live simulation' : 'Live device',
+      description: 'Receiving fresh readings from ' + source.label.toLowerCase() + '.',
+      tone: 'positive',
+    };
+  }
   return readingStatuses[state];
 }
 
@@ -74,7 +77,7 @@ export function directionName(heading: number | null): string {
 
 export function formatHeading(heading: number | null): string {
   if (heading === null) return '—';
-  // Rounding 359.99 must not display an out-of-range 360° bearing.
+  // Rounding 359.99 must not display an out-of-range 360° bearing
   return (Number(heading.toFixed(1)) % 360).toFixed(1);
 }
 

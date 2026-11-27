@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { emptyActivity, recordActivity, favoriteDirection, HISTORY_LIMIT } from '../src/core/activity.ts';
 
 const sample = (seq, heading_deg, patch = {}) => ({
-  session_id: 'a', seq, heading_deg, status: 'ok', ...patch,
+  session_id: 'a', seq, heading_deg, status: 'ok', source: 'simulator', ...patch,
 });
 
 test('activity counts accepted samples once and treats north as one sector', () => {
